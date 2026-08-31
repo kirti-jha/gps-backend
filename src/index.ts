@@ -51,6 +51,19 @@ app.get('/api/v1/health', (req, res) => {
   });
 });
 
+// Root route for Vercel landing check
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    service: 'TrackX Real-Time Location Engine API',
+    endpoints: {
+      health: '/api/v1/health',
+      trackers: '/api/v1/trackers',
+      locations: '/api/v1/locations'
+    }
+  });
+});
+
 // Socket.IO connection handler
 io.on('connection', socket => {
   console.log(`[WebSocket] Dashboard Client connected: ${socket.id}`);
@@ -65,29 +78,33 @@ io.on('connection', socket => {
 });
 
 // Background job: Periodically check and update online/idle/offline statuses
-setInterval(() => {
-  let changed = false;
-  db.trackers.forEach(tracker => {
-    const prevStatus = tracker.trackingStatus;
-    updateTrackerStatus(tracker);
-    if (prevStatus !== tracker.trackingStatus) {
-      changed = true;
-      if (io) {
-        io.emit('tracker:status', {
-          trackerId: tracker.id,
-          trackerCode: tracker.trackerCode,
-          status: tracker.trackingStatus,
-          lastSeen: tracker.lastSeen
-        });
+if (!process.env.VERCEL) {
+  setInterval(() => {
+    let changed = false;
+    db.trackers.forEach(tracker => {
+      const prevStatus = tracker.trackingStatus;
+      updateTrackerStatus(tracker);
+      if (prevStatus !== tracker.trackingStatus) {
+        changed = true;
+        if (io) {
+          io.emit('tracker:status', {
+            trackerId: tracker.id,
+            trackerCode: tracker.trackerCode,
+            status: tracker.trackingStatus,
+            lastSeen: tracker.lastSeen
+          });
+        }
       }
-    }
-  });
-}, 10000);
+    });
+  }, 10000);
 
-server.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`🚀 TrackX GPS Platform Backend running on port ${PORT}`);
-  console.log(`📍 Ingestion API: http://localhost:${PORT}/api/v1/locations`);
-  console.log(`⚡ WebSocket Engine initialized & listening`);
-  console.log(`====================================================`);
-});
+  server.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`🚀 TrackX GPS Platform Backend running on port ${PORT}`);
+    console.log(`📍 Ingestion API: http://localhost:${PORT}/api/v1/locations`);
+    console.log(`⚡ WebSocket Engine initialized & listening`);
+    console.log(`====================================================`);
+  });
+}
+
+export default app;
