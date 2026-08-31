@@ -58,9 +58,9 @@ export function validateGPSPoint(
   timestampMs: number,
   lastPoint?: { lat: number; lng: number; timestampMs: number }
 ): { valid: boolean; reason?: string } {
-  // Reject low accuracy (> 100m)
-  if (accuracy > 100) {
-    return { valid: false, reason: `Low GPS accuracy (${accuracy}m)` };
+  // Reject very low accuracy (> 50m) — client should filter to ≤40m, this is a safety net
+  if (accuracy > 50) {
+    return { valid: false, reason: `Low GPS accuracy (${accuracy}m). Need ≤50m.` };
   }
 
   // Check impossible speed jump if last point exists
