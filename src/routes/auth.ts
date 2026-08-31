@@ -13,8 +13,10 @@ router.post('/login', (req, res: Response) => {
     return res.status(400).json({ success: false, error: 'Email and password required' });
   }
 
-  // Find user by email
-  const user = Array.from(db.users.values()).find(u => u.email.toLowerCase() === email.toLowerCase());
+  // Find user by email or username prefix
+  const user = Array.from(db.users.values()).find(
+    u => u.email.toLowerCase() === email.toLowerCase() || u.email.split('@')[0].toLowerCase() === email.toLowerCase()
+  );
 
   if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
     return res.status(401).json({ success: false, error: 'Invalid credentials' });

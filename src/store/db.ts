@@ -35,6 +35,19 @@ class MemoryStore {
     this.organizations.set(orgId, org);
 
     const passwordHash = bcrypt.hashSync('admin123', 10);
+    const kirtiPasswordHash = bcrypt.hashSync('836855', 10);
+
+    const kirtiUser: User = {
+      id: 'usr-kirti-1',
+      organizationId: orgId,
+      email: 'kirti@trackx.com',
+      name: 'Kirti Jha (Admin)',
+      role: 'ORG_ADMIN',
+      passwordHash: kirtiPasswordHash,
+      createdAt: new Date().toISOString()
+    };
+    this.users.set(kirtiUser.id, kirtiUser);
+
     const adminUser: User = {
       id: 'usr-admin-1',
       organizationId: orgId,
