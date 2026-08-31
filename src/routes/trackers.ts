@@ -64,9 +64,9 @@ router.post('/', authenticateToken, (req: AuthRequest, res: Response) => {
   const newTracker: Tracker = {
     id,
     trackerCode,
-    organizationId: req.user!.organizationId,
+    organizationId: req.user?.organizationId || 'org-abc-logistics',
     deviceName,
-    platform: platform || 'Android',
+    platform: platform || 'iOS',
     batteryLevel: 100,
     trackingStatus: 'OFFLINE',
     lastLatitude: 28.6139, // Default initial center
@@ -79,6 +79,14 @@ router.post('/', authenticateToken, (req: AuthRequest, res: Response) => {
   };
 
   db.trackers.set(id, newTracker);
+
+  // Broadcast WebSocket event for real-time dashboard update
+  try {
+    const { io } = require('../index.js');
+    if (io) io.emit('tracker:created', newTracker);
+  } catch (err) {
+    // Silent catch if io circular ref
+  }
 
   res.status(201).json({
     success: true,

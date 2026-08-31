@@ -25,17 +25,39 @@ export function processSingleLocationPoint(data: LocationIngestBody): { success:
     return { success: false, error: 'Missing required parameters (trackerCode, latitude, longitude)' };
   }
 
-  // Find tracker by code or ID
-  const tracker = Array.from(db.trackers.values()).find(
-    t => t.trackerCode === trackerCode || t.id === trackerCode
-  );
-
-  if (!tracker) {
-    return { success: false, error: `Tracker with code ${trackerCode} not found` };
-  }
-
   const recordedAtDate = timestamp ? new Date(timestamp) : new Date();
   const recordedAtMs = recordedAtDate.getTime();
+
+  // Find tracker by code or ID
+  let tracker = Array.from(db.trackers.values()).find(
+    t => t.trackerCode.toUpperCase() === trackerCode.toUpperCase() || t.id === trackerCode
+  );
+
+  // Auto-register new tracker device if code is not registered yet (e.g. newly paired iPhone/mobile device)
+  if (!tracker) {
+    const isIphone = trackerCode.toLowerCase().includes('iphone') || trackerCode.toLowerCase().includes('ios');
+    tracker = {
+      id: `trk-${Date.now()}`,
+      trackerCode: trackerCode.toUpperCase(),
+      organizationId: 'org-abc-logistics',
+      deviceName: isIphone ? `Apple iPhone (${trackerCode.toUpperCase()})` : `Mobile Device (${trackerCode.toUpperCase()})`,
+      platform: isIphone ? 'iOS' : 'Android',
+      batteryLevel: battery || 100,
+      trackingStatus: 'ONLINE',
+      lastLatitude: latitude,
+      lastLongitude: longitude,
+      lastSpeed: speed,
+      lastHeading: heading,
+      lastAccuracy: accuracy || 8,
+      lastSeen: recordedAtDate.toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    db.trackers.set(tracker.id, tracker);
+
+    if (io) {
+      io.emit('tracker:created', tracker);
+    }
+  }
 
   // Validate GPS Point
   const lastPoint = tracker.lastLatitude ? {
