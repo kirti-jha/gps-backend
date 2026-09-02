@@ -1,9 +1,31 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 import { db } from '../store/db.js';
 import { UserRole } from '../types/index.js';
 
-export const JWT_SECRET = process.env.JWT_SECRET || 'trackx-secret-jwt-key-2026';
+// Load .env early — auth.ts may be imported before index.ts calls dotenv.config()
+dotenv.config();
+
+// ── JWT Secret Guard ──────────────────────────────────────────────────────────
+// If JWT_SECRET is not set, the server must NOT start.
+// A missing secret means we'd fall back to a publicly-known default — a critical
+// security vulnerability that allows anyone to forge valid tokens.
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    '\n\n' +
+    '═══════════════════════════════════════════════════════\n' +
+    '  FATAL: JWT_SECRET environment variable is not set.\n' +
+    '  The server cannot start without a secure secret.\n' +
+    '\n' +
+    '  Fix: Add JWT_SECRET to your .env file.\n' +
+    '  Generate one with:\n' +
+    '    node -e "require(\'crypto\').randomBytes(48, (e,b) => console.log(b.toString(\'hex\')))"\n' +
+    '═══════════════════════════════════════════════════════\n'
+  );
+}
+
+export const JWT_SECRET = process.env.JWT_SECRET;
 
 export interface AuthRequest extends Request {
   user?: {

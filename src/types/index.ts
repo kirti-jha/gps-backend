@@ -34,6 +34,7 @@ export interface Tracker {
   lastHeading: number; // 0-360 degrees
   lastAccuracy: number; // meters
   lastSeen: string;
+  apiKey: string; // Secret key for device-level location ingestion auth
   createdAt: string;
 }
 

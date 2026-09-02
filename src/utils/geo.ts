@@ -78,3 +78,38 @@ export function validateGPSPoint(
 
   return { valid: true };
 }
+
+/**
+ * Format distance in human-readable string (meters if < 1km, km otherwise)
+ */
+export function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(2)} km`;
+}
+
+/**
+ * Calculate compass bearing from point A to point B (0-360 degrees)
+ * 0° = North, 90° = East, 180° = South, 270° = West
+ */
+export function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const toDeg = (rad: number) => (rad * 180) / Math.PI;
+
+  const dLon = toRad(lon2 - lon1);
+  const rLat1 = toRad(lat1);
+  const rLat2 = toRad(lat2);
+
+  const y = Math.sin(dLon) * Math.cos(rLat2);
+  const x = Math.cos(rLat1) * Math.sin(rLat2) - Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLon);
+
+  const bearing = toDeg(Math.atan2(y, x));
+  return Math.round((bearing + 360) % 360);
+}
+
+/**
+ * Convert bearing degrees to human-readable compass direction
+ */
+export function bearingToDirection(bearing: number): string {
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return dirs[Math.round(bearing / 45) % 8];
+}
