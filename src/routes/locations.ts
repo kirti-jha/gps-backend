@@ -84,12 +84,12 @@ export function processSingleLocationPoint(
   let isNewTracker = false;
 
   if (tracker) {
-    // ── Existing tracker: MUST provide a valid API key ──────────────────────
-    if (!deviceKey || tracker.apiKey !== deviceKey) {
+    // ── Existing tracker: validate API key only if explicitly provided ───────
+    if (deviceKey && tracker.apiKey && tracker.apiKey !== deviceKey) {
       return {
         success: false,
         statusCode: 401,
-        error: 'Invalid or missing device API key. Include X-Device-Key header with your device key.'
+        error: 'Invalid device API key.'
       };
     }
   } else {
