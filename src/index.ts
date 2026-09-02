@@ -29,12 +29,22 @@ export const io = initSocket(server);
 const PORT = process.env.PORT || 5000;
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Only allow explicitly configured origins — not the entire internet
-const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) ?? ['http://localhost:3000'];
+// Allows explicitly configured origins + any local development port (localhost/127.0.0.1)
+const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || ['http://localhost:3000', 'http://localhost:3001'];
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow non-browser clients (Postman, mobile apps, curl)
+    if (!origin) return callback(null, true);
+    // Allow matching origins or any localhost/127.0.0.1 port
+    if (configuredOrigins.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key'],
+  credentials: true
 }));
 
 // ── Body Parser ───────────────────────────────────────────────────────────────

@@ -15,11 +15,17 @@ export let io: SocketIOServer | null = null;
  * Must be called once in index.ts before any route handlers run.
  */
 export function initSocket(server: http.Server): SocketIOServer {
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) ?? ['http://localhost:3000'];
+  const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || ['http://localhost:3000', 'http://localhost:3001'];
 
   io = new SocketIOServer(server, {
     cors: {
-      origin: corsOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (configuredOrigins.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+      },
       methods: ['GET', 'POST']
     }
   });

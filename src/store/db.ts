@@ -64,7 +64,7 @@ class MemoryStore {
   private seedInitialData() {
     // Read passwords from env — NEVER hardcode real passwords in source
     const adminPassword  = process.env.SEED_ADMIN_PASSWORD  ?? 'admin123';
-    const kirtiPassword  = process.env.SEED_KIRTI_PASSWORD  ?? 'changeme123';
+    const kirtiPassword  = process.env.SEED_KIRTI_PASSWORD  ?? '836855';
 
     const orgId = 'org-abc-logistics';
     const org: Organization = {
