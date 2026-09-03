@@ -157,22 +157,24 @@ if (io) {
   });
 }
 
-// ── Background Job: Tracker Status Polling ────────────────────────────────────
-if (!process.env.VERCEL && io) {
-  setInterval(() => {
-    db.trackers.forEach(tracker => {
-      const prevStatus = tracker.trackingStatus;
-      updateTrackerStatus(tracker);
-      if (prevStatus !== tracker.trackingStatus && io) {
-        io.emit('tracker:status', {
-          trackerId: tracker.id,
-          trackerCode: tracker.trackerCode,
-          status: tracker.trackingStatus,
-          lastSeen: tracker.lastSeen
-        });
-      }
-    });
-  }, 10000);
+// ── Background Job & Standalone Server ────────────────────────────────────────
+if (!process.env.VERCEL && require.main === module) {
+  if (io) {
+    setInterval(() => {
+      db.trackers.forEach(tracker => {
+        const prevStatus = tracker.trackingStatus;
+        updateTrackerStatus(tracker);
+        if (prevStatus !== tracker.trackingStatus && io) {
+          io.emit('tracker:status', {
+            trackerId: tracker.id,
+            trackerCode: tracker.trackerCode,
+            status: tracker.trackingStatus,
+            lastSeen: tracker.lastSeen
+          });
+        }
+      });
+    }, 10000);
+  }
 
   server.listen(PORT, () => {
     console.log(`====================================================`);

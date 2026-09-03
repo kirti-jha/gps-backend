@@ -174,22 +174,24 @@ if (exports.io) {
         });
     });
 }
-// ── Background Job: Tracker Status Polling ────────────────────────────────────
-if (!process.env.VERCEL && exports.io) {
-    setInterval(() => {
-        db_1.db.trackers.forEach(tracker => {
-            const prevStatus = tracker.trackingStatus;
-            (0, trackers_1.updateTrackerStatus)(tracker);
-            if (prevStatus !== tracker.trackingStatus && exports.io) {
-                exports.io.emit('tracker:status', {
-                    trackerId: tracker.id,
-                    trackerCode: tracker.trackerCode,
-                    status: tracker.trackingStatus,
-                    lastSeen: tracker.lastSeen
-                });
-            }
-        });
-    }, 10000);
+// ── Background Job & Standalone Server ────────────────────────────────────────
+if (!process.env.VERCEL && require.main === module) {
+    if (exports.io) {
+        setInterval(() => {
+            db_1.db.trackers.forEach(tracker => {
+                const prevStatus = tracker.trackingStatus;
+                (0, trackers_1.updateTrackerStatus)(tracker);
+                if (prevStatus !== tracker.trackingStatus && exports.io) {
+                    exports.io.emit('tracker:status', {
+                        trackerId: tracker.id,
+                        trackerCode: tracker.trackerCode,
+                        status: tracker.trackingStatus,
+                        lastSeen: tracker.lastSeen
+                    });
+                }
+            });
+        }, 10000);
+    }
     server.listen(PORT, () => {
         console.log(`====================================================`);
         console.log(`🚀 TrackX GPS Platform Backend running on port ${PORT}`);
