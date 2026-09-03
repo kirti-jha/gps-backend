@@ -24,7 +24,7 @@ const app = express();
 const server = http.createServer(app);
 
 // ── Initialize Socket.IO (must be before routes) ─────────────────────────────
-export const io = initSocket(server);
+export const io = !process.env.VERCEL ? initSocket(server) : null;
 
 const PORT = process.env.PORT || 5000;
 
@@ -140,28 +140,30 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // ── Socket.IO Connection Handler ──────────────────────────────────────────────
-io.on('connection', socket => {
-  console.log(`[WebSocket] Dashboard Client connected: ${socket.id}`);
+if (io) {
+  io.on('connection', socket => {
+    console.log(`[WebSocket] Dashboard Client connected: ${socket.id}`);
 
-  // Send current trackers state on connect
-  const currentTrackers = Array.from(db.trackers.values()).map(t => {
-    const { apiKey, ...safeTracker } = t as any; // Never expose apiKey to dashboard
-    return updateTrackerStatus(safeTracker as any);
-  });
-  socket.emit('trackers:init', currentTrackers);
+    // Send current trackers state on connect
+    const currentTrackers = Array.from(db.trackers.values()).map(t => {
+      const { apiKey, ...safeTracker } = t as any; // Never expose apiKey to dashboard
+      return updateTrackerStatus(safeTracker as any);
+    });
+    socket.emit('trackers:init', currentTrackers);
 
-  socket.on('disconnect', () => {
-    console.log(`[WebSocket] Client disconnected: ${socket.id}`);
+    socket.on('disconnect', () => {
+      console.log(`[WebSocket] Client disconnected: ${socket.id}`);
+    });
   });
-});
+}
 
 // ── Background Job: Tracker Status Polling ────────────────────────────────────
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && io) {
   setInterval(() => {
     db.trackers.forEach(tracker => {
       const prevStatus = tracker.trackingStatus;
       updateTrackerStatus(tracker);
-      if (prevStatus !== tracker.trackingStatus) {
+      if (prevStatus !== tracker.trackingStatus && io) {
         io.emit('tracker:status', {
           trackerId: tracker.id,
           trackerCode: tracker.trackerCode,
