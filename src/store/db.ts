@@ -9,7 +9,7 @@ import {
   Geofence,
   Alert,
   Trip
-} from '../types/index.js';
+} from '../types/index';
 
 // ─── File Persistence Configuration ──────────────────────────────────────────
 const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');

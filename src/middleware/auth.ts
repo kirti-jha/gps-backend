@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { db } from '../store/db.js';
-import { UserRole } from '../types/index.js';
+import { db } from '../store/db';
+import { UserRole } from '../types/index';
 
 // Load .env early — auth.ts may be imported before index.ts calls dotenv.config()
 dotenv.config();

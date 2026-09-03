@@ -1,9 +1,9 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { db, generateDeviceApiKey } from '../store/db.js';
-import { authenticateToken, AuthRequest } from '../middleware/auth.js';
-import { io } from '../socket.js'; // ← Clean import, no more circular require()
-import { Tracker, TrackingStatus } from '../types/index.js';
+import { db, generateDeviceApiKey } from '../store/db';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { io } from '../socket'; // ← Clean import, no more circular require()
+import { Tracker, TrackingStatus } from '../types/index';
 
 const router = Router();
 

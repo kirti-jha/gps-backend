@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
-import { db } from '../store/db.js';
-import { authenticateToken, AuthRequest } from '../middleware/auth.js';
-import { calculateDistanceKm } from '../utils/geo.js';
+import { db } from '../store/db';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { calculateDistanceKm } from '../utils/geo';
 
 const router = Router();
 

@@ -1,9 +1,9 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { db, generateDeviceApiKey } from '../store/db.js';
-import { validateGPSPoint, isPointInCircle, isPointInPolygon, calculateDistanceKm, formatDistance, calculateBearing, bearingToDirection } from '../utils/geo.js';
-import { LocationPoint, Alert, Tracker } from '../types/index.js';
-import { io } from '../socket.js'; // ← Clean import from socket.ts
+import { db, generateDeviceApiKey } from '../store/db';
+import { validateGPSPoint, isPointInCircle, isPointInPolygon, calculateDistanceKm, formatDistance, calculateBearing, bearingToDirection } from '../utils/geo';
+import { LocationPoint, Alert, Tracker } from '../types/index';
+import { io } from '../socket'; // ← Clean import from socket.ts
 
 const router = Router();
 

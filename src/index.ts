@@ -7,18 +7,18 @@ import rateLimit from 'express-rate-limit';
 // Load .env FIRST — before any module that reads process.env (e.g. auth.ts)
 dotenv.config();
 
-import authRoutes from './routes/auth.js';
-import trackerRoutes, { updateTrackerStatus } from './routes/trackers.js';
-import locationRoutes from './routes/locations.js';
-import historyRoutes from './routes/history.js';
-import geofenceRoutes from './routes/geofences.js';
-import alertRoutes from './routes/alerts.js';
-import reportRoutes from './routes/reports.js';
-import tripRoutes from './routes/trips.js';
-import proximityRoutes from './routes/proximity.js';
-import routeRoutes from './routes/route.js';
-import { db } from './store/db.js';
-import { initSocket } from './socket.js';
+import authRoutes from './routes/auth';
+import trackerRoutes, { updateTrackerStatus } from './routes/trackers';
+import locationRoutes from './routes/locations';
+import historyRoutes from './routes/history';
+import geofenceRoutes from './routes/geofences';
+import alertRoutes from './routes/alerts';
+import reportRoutes from './routes/reports';
+import tripRoutes from './routes/trips';
+import proximityRoutes from './routes/proximity';
+import routeRoutes from './routes/route';
+import { db } from './store/db';
+import { initSocket } from './socket';
 
 const app = express();
 const server = http.createServer(app);

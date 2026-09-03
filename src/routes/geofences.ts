@@ -1,8 +1,8 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../store/db.js';
-import { authenticateToken, AuthRequest } from '../middleware/auth.js';
-import { Geofence } from '../types/index.js';
+import { db } from '../store/db';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { Geofence } from '../types/index';
 
 const router = Router();
 
