@@ -158,7 +158,15 @@ if (io) {
 }
 
 // ── Background Job & Standalone Server ────────────────────────────────────────
-if (!process.env.VERCEL && require.main === module) {
+const isServerless = Boolean(
+  process.env.VERCEL ||
+  process.env.NOW_REGION ||
+  process.env.LAMBDA_TASK_ROOT ||
+  process.env.VERCEL_ENV ||
+  process.env.AWS_EXECUTION_ENV
+);
+
+if (!isServerless && process.env.NODE_ENV !== 'production') {
   if (io) {
     setInterval(() => {
       db.trackers.forEach(tracker => {
