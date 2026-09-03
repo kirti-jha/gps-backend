@@ -1,0 +1,95 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const db_1 = require("../store/db");
+const auth_1 = require("../middleware/auth");
+const geo_1 = require("../utils/geo");
+const trackers_1 = require("./trackers");
+const router = (0, express_1.Router)();
+/**
+ * GET /api/v1/proximity
+ *
+ * Returns real-time distance from a reference tracker to ALL other trackers
+ * in the same organization. Sorted by nearest first.
+ *
+ * Query params:
+ *   ?referenceTrackerId=trk-xxx   ← the "my device" tracker id
+ *
+ * Response includes:
+ *  - straightLineKm  (Haversine, instant, no external API)
+ *  - bearing         (compass degrees 0-360)
+ *  - direction       (N / NE / E / SE / S / SW / W / NW)
+ *  - battery         (live battery %)
+ *  - status          (ONLINE / IDLE / OFFLINE)
+ */
+router.get('/', auth_1.authenticateToken, (req, res) => {
+    const { referenceTrackerId } = req.query;
+    if (!referenceTrackerId || typeof referenceTrackerId !== 'string') {
+        return res.status(400).json({
+            success: false,
+            error: 'Query param "referenceTrackerId" is required'
+        });
+    }
+    // Look up the reference tracker
+    const refTracker = db_1.db.trackers.get(referenceTrackerId);
+    if (!refTracker || refTracker.organizationId !== req.user.organizationId) {
+        return res.status(404).json({
+            success: false,
+            error: 'Reference tracker not found or not in your organization'
+        });
+    }
+    if (refTracker.lastLatitude == null || refTracker.lastLongitude == null) {
+        return res.status(422).json({
+            success: false,
+            error: 'Reference tracker has no location data yet. Please send a GPS point first.'
+        });
+    }
+    (0, trackers_1.updateTrackerStatus)(refTracker);
+    // Build distances to all other org trackers
+    const devices = Array.from(db_1.db.trackers.values())
+        .filter(t => t.id !== referenceTrackerId &&
+        t.organizationId === req.user.organizationId &&
+        t.lastLatitude != null &&
+        t.lastLongitude != null)
+        .map(t => {
+        (0, trackers_1.updateTrackerStatus)(t);
+        const distKm = (0, geo_1.calculateDistanceKm)(refTracker.lastLatitude, refTracker.lastLongitude, t.lastLatitude, t.lastLongitude);
+        const bearing = (0, geo_1.calculateBearing)(refTracker.lastLatitude, refTracker.lastLongitude, t.lastLatitude, t.lastLongitude);
+        return {
+            id: t.id,
+            trackerCode: t.trackerCode,
+            deviceName: t.deviceName,
+            platform: t.platform,
+            battery: t.batteryLevel,
+            status: t.trackingStatus,
+            lastSeen: t.lastSeen,
+            lat: t.lastLatitude,
+            lng: t.lastLongitude,
+            speed: t.lastSpeed,
+            straightLineKm: distKm,
+            straightLineFormatted: (0, geo_1.formatDistance)(distKm),
+            bearing,
+            direction: (0, geo_1.bearingToDirection)(bearing)
+        };
+    })
+        .sort((a, b) => a.straightLineKm - b.straightLineKm); // nearest first
+    res.json({
+        success: true,
+        data: {
+            reference: {
+                id: refTracker.id,
+                trackerCode: refTracker.trackerCode,
+                deviceName: refTracker.deviceName,
+                platform: refTracker.platform,
+                battery: refTracker.batteryLevel,
+                status: refTracker.trackingStatus,
+                lat: refTracker.lastLatitude,
+                lng: refTracker.lastLongitude,
+                lastSeen: refTracker.lastSeen
+            },
+            totalDevices: devices.length,
+            devices
+        }
+    });
+});
+exports.default = router;
