@@ -70,12 +70,13 @@ router.post('/', authenticateToken, (req: AuthRequest, res: Response) => {
 
 // DELETE /api/v1/geofences/:id
 router.delete('/:id', authenticateToken, (req: AuthRequest, res: Response) => {
-  const gf = db.geofences.get(req.params.id);
+  const id = req.params.id as string;
+  const gf = db.geofences.get(id);
   if (!gf || gf.organizationId !== req.user!.organizationId) {
     return res.status(404).json({ success: false, error: 'Geofence not found' });
   }
 
-  db.geofences.delete(req.params.id);
+  db.geofences.delete(id);
   res.json({ success: true, message: 'Geofence deleted' });
 });
 

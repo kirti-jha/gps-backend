@@ -56,7 +56,8 @@ router.get('/', authenticateToken, (req: AuthRequest, res: Response) => {
 
 // GET /api/v1/trackers/:id
 router.get('/:id', authenticateToken, (req: AuthRequest, res: Response) => {
-  const tracker = db.trackers.get(req.params.id);
+  const id = req.params.id as string;
+  const tracker = db.trackers.get(id);
   if (!tracker || tracker.organizationId !== req.user!.organizationId) {
     return res.status(404).json({ success: false, error: 'Tracker not found' });
   }
