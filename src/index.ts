@@ -36,8 +36,12 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow non-browser clients (Postman, mobile apps, curl)
     if (!origin) return callback(null, true);
-    // Allow matching origins or any localhost/127.0.0.1 port
-    if (configuredOrigins.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin)) {
+    // Allow matching origins, any localhost/127.0.0.1 port, or any *.vercel.app deployment
+    if (
+      configuredOrigins.includes(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin) ||
+      /\.vercel\.app$/.test(origin)
+    ) {
       return callback(null, true);
     }
     return callback(new Error(`CORS blocked for origin: ${origin}`), false);

@@ -12,7 +12,7 @@ import {
 } from '../types/index.js';
 
 // ─── File Persistence Configuration ──────────────────────────────────────────
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'data');
 const STORAGE_FILE = path.join(DATA_DIR, 'storage.json');
 
 // ─── Alert Deduplication Cooldowns (ms) ────────────────────────────────────

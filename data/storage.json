@@ -1,0 +1,28 @@
+{
+  "trackers": [
+    [
+      "trk-1788440922798",
+      {
+        "id": "trk-1788440922798",
+        "trackerCode": "TRK-698300",
+        "organizationId": "org-abc-logistics",
+        "deviceName": "mine",
+        "platform": "iOS",
+        "batteryLevel": 100,
+        "trackingStatus": "OFFLINE",
+        "lastLatitude": 28.6139,
+        "lastLongitude": 77.209,
+        "lastSpeed": 0,
+        "lastHeading": 0,
+        "lastAccuracy": 10,
+        "lastSeen": "2026-09-03T13:08:42.798Z",
+        "apiKey": "trk_VR8JKNNO7JuoQdHJsXU56gfZUbwAJIwm",
+        "createdAt": "2026-09-03T13:08:42.798Z"
+      }
+    ]
+  ],
+  "locations": [],
+  "geofences": [],
+  "alerts": [],
+  "trips": []
+}
