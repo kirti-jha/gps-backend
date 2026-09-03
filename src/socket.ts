@@ -21,10 +21,14 @@ export function initSocket(server: http.Server): SocketIOServer {
     cors: {
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (configuredOrigins.includes(origin) || /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin)) {
+        if (
+          configuredOrigins.includes(origin) ||
+          /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin) ||
+          /\.vercel\.app$/.test(origin)
+        ) {
           return callback(null, true);
         }
-        return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+        return callback(null, false);
       },
       methods: ['GET', 'POST']
     }

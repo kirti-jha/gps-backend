@@ -44,7 +44,7 @@ app.use(cors({
     ) {
       return callback(null, true);
     }
-    return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key'],
