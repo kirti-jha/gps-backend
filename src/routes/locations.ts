@@ -166,6 +166,9 @@ export function processSingleLocationPoint(
   tracker.trackingStatus = 'ONLINE';
   db.trackers.set(tracker.id, tracker);
 
+  // Persist to storage disk file
+  db.saveToDisk();
+
   // ── Geofence Checks ───────────────────────────────────────────────────────
   const orgGeofences = Array.from(db.geofences.values()).filter(g => g.organizationId === tracker!.organizationId);
 

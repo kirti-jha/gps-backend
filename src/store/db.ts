@@ -1,4 +1,6 @@
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
 import {
   User,
   Organization,
@@ -8,6 +10,10 @@ import {
   Alert,
   Trip
 } from '../types/index.js';
+
+// ─── File Persistence Configuration ──────────────────────────────────────────
+const DATA_DIR = path.join(process.cwd(), 'data');
+const STORAGE_FILE = path.join(DATA_DIR, 'storage.json');
 
 // ─── Alert Deduplication Cooldowns (ms) ────────────────────────────────────
 export const ALERT_COOLDOWNS: Record<string, number> = {
@@ -28,7 +34,7 @@ export function generateDeviceApiKey(): string {
   return key;
 }
 
-// ─── In-Memory Database Store ────────────────────────────────────────────────
+// ─── Persistent Database Store ───────────────────────────────────────────────
 class MemoryStore {
   organizations: Map<string, Organization> = new Map();
   users:         Map<string, User>         = new Map();
@@ -43,6 +49,65 @@ class MemoryStore {
 
   constructor() {
     this.seedInitialData();
+    this.loadFromDisk();
+  }
+
+  // ── Persistence Helpers ───────────────────────────────────────────────────
+  public saveToDisk(): void {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+
+      const serialized = {
+        trackers: Array.from(this.trackers.entries()),
+        locations: Array.from(this.locations.entries()),
+        geofences: Array.from(this.geofences.entries()),
+        alerts: this.alerts,
+        trips: Array.from(this.trips.entries())
+      };
+
+      fs.writeFileSync(STORAGE_FILE, JSON.stringify(serialized, null, 2), 'utf-8');
+    } catch (err: any) {
+      console.error('[DB Store] Error saving data to disk:', err.message);
+    }
+  }
+
+  private loadFromDisk(): void {
+    try {
+      if (fs.existsSync(STORAGE_FILE)) {
+        const raw = fs.readFileSync(STORAGE_FILE, 'utf-8');
+        const data = JSON.parse(raw);
+
+        if (Array.isArray(data.trackers)) {
+          data.trackers.forEach(([id, tracker]: [string, Tracker]) => {
+            this.trackers.set(id, tracker);
+          });
+        }
+        if (Array.isArray(data.locations)) {
+          data.locations.forEach(([id, points]: [string, LocationPoint[]]) => {
+            this.locations.set(id, points);
+          });
+        }
+        if (Array.isArray(data.geofences)) {
+          data.geofences.forEach(([id, gf]: [string, Geofence]) => {
+            this.geofences.set(id, gf);
+          });
+        }
+        if (Array.isArray(data.alerts)) {
+          this.alerts = data.alerts;
+        }
+        if (Array.isArray(data.trips)) {
+          data.trips.forEach(([id, tripList]: [string, Trip[]]) => {
+            this.trips.set(id, tripList);
+          });
+        }
+
+        console.log(`[DB Store] Loaded ${this.trackers.size} saved devices & history from disk storage`);
+      }
+    } catch (err: any) {
+      console.error('[DB Store] Error loading data from disk:', err.message);
+    }
   }
 
   // ── Alert Dedup Helpers ───────────────────────────────────────────────────
@@ -62,7 +127,6 @@ class MemoryStore {
 
   // ── Seed Data ─────────────────────────────────────────────────────────────
   private seedInitialData() {
-    // Read passwords from env — NEVER hardcode real passwords in source
     const adminPassword  = process.env.SEED_ADMIN_PASSWORD  ?? 'admin123';
     const kirtiPassword  = process.env.SEED_KIRTI_PASSWORD  ?? '836855';
 
@@ -110,9 +174,6 @@ class MemoryStore {
       createdAt: new Date().toISOString()
     };
     this.users.set(trackerUser.id, trackerUser);
-
-    // Clean initial state for live hardware testing:
-    // No mock trackers, no mock route history, no mock geofences, no mock alerts.
   }
 }
 

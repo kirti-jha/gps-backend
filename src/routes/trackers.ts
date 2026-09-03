@@ -99,6 +99,7 @@ router.post('/', authenticateToken, (req: AuthRequest, res: Response) => {
   };
 
   db.trackers.set(id, newTracker);
+  db.saveToDisk();
 
   // Broadcast real-time event (apiKey excluded from broadcast)
   if (io) {
