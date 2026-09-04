@@ -4,9 +4,14 @@ let initError = null;
 try {
   const loaded = require('../dist/src/index');
   app = loaded.default || loaded;
-} catch (err) {
-  console.error('[Vercel Boot Error]', err);
-  initError = err.message || String(err);
+} catch (err1) {
+  try {
+    const loadedRoot = require('../dist/index');
+    app = loadedRoot.default || loadedRoot;
+  } catch (err2) {
+    console.error('[Vercel Boot Error]', err1, err2);
+    initError = err1.message || String(err1);
+  }
 }
 
 module.exports = (req, res) => {
@@ -19,3 +24,4 @@ module.exports = (req, res) => {
   }
   return app(req, res);
 };
+

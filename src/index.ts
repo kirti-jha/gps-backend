@@ -29,27 +29,24 @@ export const io = !process.env.VERCEL ? initSocket(server) : null;
 const PORT = process.env.PORT || 5000;
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Allows explicitly configured origins + any local development port (localhost/127.0.0.1)
-const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || ['http://localhost:3000', 'http://localhost:3001'];
+const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean) || [];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser clients (Postman, mobile apps, curl)
+    // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    // Allow matching origins, any localhost/127.0.0.1 port, or any *.vercel.app deployment
-    if (
-      configuredOrigins.includes(origin) ||
-      /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin) ||
-      /\.vercel\.app$/.test(origin)
-    ) {
-      return callback(null, true);
-    }
-    return callback(null, false);
+    
+    // Always permit origin to prevent browser CORS block
+    return callback(null, true);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key', 'Accept', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
+
+// Handle preflight OPTIONS requests for all routes
+app.options('*', cors() as any);
 
 // ── Body Parser ───────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));

@@ -62,25 +62,22 @@ const server = http_1.default.createServer(app);
 exports.io = !process.env.VERCEL ? (0, socket_1.initSocket)(server) : null;
 const PORT = process.env.PORT || 5000;
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Allows explicitly configured origins + any local development port (localhost/127.0.0.1)
-const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || ['http://localhost:3000', 'http://localhost:3001'];
+const configuredOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()).filter(Boolean) || [];
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        // Allow non-browser clients (Postman, mobile apps, curl)
+        // Allow requests with no origin (like mobile apps, curl, Postman)
         if (!origin)
             return callback(null, true);
-        // Allow matching origins, any localhost/127.0.0.1 port, or any *.vercel.app deployment
-        if (configuredOrigins.includes(origin) ||
-            /^http:\/\/(localhost|127\.0\.0\.1):[0-9]+$/.test(origin) ||
-            /\.vercel\.app$/.test(origin)) {
-            return callback(null, true);
-        }
-        return callback(null, false);
+        // Always permit origin to prevent browser CORS block
+        return callback(null, true);
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key'],
-    credentials: true
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Key', 'Accept', 'X-Requested-With'],
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
+// Handle preflight OPTIONS requests for all routes
+app.options('*', (0, cors_1.default)());
 // ── Body Parser ───────────────────────────────────────────────────────────────
 app.use(express_1.default.json({ limit: '1mb' }));
 // ── Rate Limiting ─────────────────────────────────────────────────────────────
@@ -174,22 +171,29 @@ if (exports.io) {
         });
     });
 }
-// ── Background Job: Tracker Status Polling ────────────────────────────────────
-if (!process.env.VERCEL && exports.io) {
-    setInterval(() => {
-        db_1.db.trackers.forEach(tracker => {
-            const prevStatus = tracker.trackingStatus;
-            (0, trackers_1.updateTrackerStatus)(tracker);
-            if (prevStatus !== tracker.trackingStatus && exports.io) {
-                exports.io.emit('tracker:status', {
-                    trackerId: tracker.id,
-                    trackerCode: tracker.trackerCode,
-                    status: tracker.trackingStatus,
-                    lastSeen: tracker.lastSeen
-                });
-            }
-        });
-    }, 10000);
+// ── Background Job & Standalone Server ────────────────────────────────────────
+const isServerless = Boolean(process.env.VERCEL ||
+    process.env.NOW_REGION ||
+    process.env.LAMBDA_TASK_ROOT ||
+    process.env.VERCEL_ENV ||
+    process.env.AWS_EXECUTION_ENV);
+if (!isServerless && process.env.NODE_ENV !== 'production') {
+    if (exports.io) {
+        setInterval(() => {
+            db_1.db.trackers.forEach(tracker => {
+                const prevStatus = tracker.trackingStatus;
+                (0, trackers_1.updateTrackerStatus)(tracker);
+                if (prevStatus !== tracker.trackingStatus && exports.io) {
+                    exports.io.emit('tracker:status', {
+                        trackerId: tracker.id,
+                        trackerCode: tracker.trackerCode,
+                        status: tracker.trackingStatus,
+                        lastSeen: tracker.lastSeen
+                    });
+                }
+            });
+        }, 10000);
+    }
     server.listen(PORT, () => {
         console.log(`====================================================`);
         console.log(`🚀 TrackX GPS Platform Backend running on port ${PORT}`);

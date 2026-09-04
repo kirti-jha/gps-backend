@@ -123,8 +123,12 @@ class MemoryStore {
             createdAt: new Date().toISOString()
         };
         this.organizations.set(orgId, org);
-        const adminHash = bcryptjs_1.default.hashSync(adminPassword, 10);
-        const kirtiHash = bcryptjs_1.default.hashSync(kirtiPassword, 10);
+        const adminHash = adminPassword === 'admin123'
+            ? '$2a$10$hzT6BBfZfjhox0EcQ2B1A.WvVV9PDuXvdtGd6SBle3BEaN2U0wJ1i'
+            : bcryptjs_1.default.hashSync(adminPassword, 10);
+        const kirtiHash = kirtiPassword === '836855'
+            ? '$2a$10$l0BpDVJVidjGCJrCK4ySsudk2s5rpJSSmtw.5TAd86ij.ndvC3XKy'
+            : bcryptjs_1.default.hashSync(kirtiPassword, 10);
         const kirtiUser = {
             id: 'usr-kirti-1',
             organizationId: orgId,
