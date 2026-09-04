@@ -102,4 +102,25 @@ router.post('/', auth_1.authenticateToken, (req, res) => {
         data: newTracker // ← apiKey included here intentionally (first and only time)
     });
 });
+// DELETE /api/v1/trackers/:id — Remove tracker device
+router.delete('/:id', auth_1.authenticateToken, (req, res) => {
+    const id = req.params.id;
+    const tracker = db_1.db.trackers.get(id);
+    if (!tracker || tracker.organizationId !== req.user.organizationId) {
+        return res.status(404).json({ success: false, error: 'Tracker not found' });
+    }
+    // Remove tracker and location history
+    db_1.db.trackers.delete(id);
+    db_1.db.locations.delete(id);
+    db_1.db.trips.delete(id);
+    db_1.db.saveToDisk();
+    // Broadcast deletion real-time event
+    if (socket_1.io) {
+        socket_1.io.emit('tracker:deleted', { id, trackerCode: tracker.trackerCode });
+    }
+    res.json({
+        success: true,
+        message: `Tracker ${tracker.deviceName} (${tracker.trackerCode}) removed successfully.`
+    });
+});
 exports.default = router;

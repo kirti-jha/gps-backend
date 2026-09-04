@@ -114,4 +114,31 @@ router.post('/', authenticateToken, (req: AuthRequest, res: Response) => {
   });
 });
 
+
+// DELETE /api/v1/trackers/:id — Remove tracker device
+router.delete('/:id', authenticateToken, (req: AuthRequest, res: Response) => {
+  const id = req.params.id as string;
+  const tracker = db.trackers.get(id);
+
+  if (!tracker || tracker.organizationId !== req.user!.organizationId) {
+    return res.status(404).json({ success: false, error: 'Tracker not found' });
+  }
+
+  // Remove tracker and location history
+  db.trackers.delete(id);
+  db.locations.delete(id);
+  db.trips.delete(id);
+  db.saveToDisk();
+
+  // Broadcast deletion real-time event
+  if (io) {
+    io.emit('tracker:deleted', { id, trackerCode: tracker.trackerCode });
+  }
+
+  res.json({
+    success: true,
+    message: `Tracker ${tracker.deviceName} (${tracker.trackerCode}) removed successfully.`
+  });
+});
+
 export default router;
